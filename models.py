@@ -45,7 +45,7 @@ class FullyConnectedWTA:
             self.loss = tf.reduce_mean(tf.square(decoded - self.input))
             self.optimizer_op = self.optimizer(self.learning_rate).minimize(self.loss)
 
-    def step(self, session, input, forward_only):
+    def step(self, session, input, forward_only=False):
         if forward_only:
             return session.run(self.encoded, feed_dict={self.input: input})
         else:
