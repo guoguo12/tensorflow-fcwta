@@ -63,7 +63,7 @@ class FullyConnectedWTA:
                                       name='linear')
             self.decoded = decoded
 
-            self.loss = tf.reduce_mean(tf.square(decoded - self.input))
+            self.loss = tf.reduce_sum(tf.square(decoded - self.input))
             self.optimizer_op = self.optimizer(self.learning_rate).minimize(self.loss)
 
     def step(self, session, input, forward_only=False):
@@ -75,7 +75,7 @@ class FullyConnectedWTA:
           forward_only: whether to do the backward step or only forward.
 
         Returns:
-          A tuple containing the reconstruction and the (mean) squared loss.
+          A tuple containing the reconstruction and the (summed) squared loss.
 
         Raises:
           ValueError: if dimensionality of input disagrees with the input_dim
