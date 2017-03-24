@@ -10,7 +10,7 @@ from models import FullyConnectedWTA
 
 tf.app.flags.DEFINE_float('learning_rate', 1e-2,
                           'learning rate to use during training')
-tf.app.flags.DEFINE_float('sparsity', 0.05,
+tf.app.flags.DEFINE_float('sparsity', 0.1,
                           'lifetime sparsity constraint to enforce')
 tf.app.flags.DEFINE_float('test_size', 0.2,
                           'classification test set size')
@@ -18,7 +18,7 @@ tf.app.flags.DEFINE_integer('batch_size', 256,
                             'batch size to use during training')
 tf.app.flags.DEFINE_integer('hidden_units', 256,
                             'size of each ReLU (encode) layer')
-tf.app.flags.DEFINE_integer('num_layers', 3,
+tf.app.flags.DEFINE_integer('num_layers', 1,
                             'number of ReLU (encode) layers')
 tf.app.flags.DEFINE_integer('train_steps', 200000,
                             'total minibatches to train')
