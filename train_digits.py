@@ -34,6 +34,7 @@ QUEUE_MIN_AFTER_DEQUEUE = 128
 
 
 def visualize_dictionary(dictionary, shape, num_shown=20, row_length=10):
+    """Plots the code dictionary."""
     rows = num_shown / row_length
     for i, image in enumerate(dictionary[:num_shown]):
         plt.subplot(rows, 10, i + 1)
@@ -42,7 +43,8 @@ def visualize_dictionary(dictionary, shape, num_shown=20, row_length=10):
     plt.show()
 
 
-def visualize_decode(truth, reconstructed, shape, num_shown=10):
+def visualize_reconstruction(truth, reconstructed, shape, num_shown=10):
+    """Plots reconstructed images below the ground truth images."""
     for i, image in enumerate(truth[:num_shown]):
         plt.subplot(2, num_shown, i + 1)
         plt.axis('off')
@@ -73,7 +75,7 @@ def main():
         batch_size=FLAGS.batch_size,
         capacity=QUEUE_CAPACITY,
         min_after_dequeue=QUEUE_MIN_AFTER_DEQUEUE,
-        seed=0,
+        seed=0 if FLAGS.use_seed else None,
         enqueue_many=True)
 
     fcwta = FullyConnectedWTA(64,
@@ -99,8 +101,8 @@ def main():
         visualize_dictionary(dictionary, (8, 8), num_shown=40)
 
         # Examine reconstructions
-        decoded, _ = fcwta.step(sess, digits.data)
-        visualize_decode(digits.data, decoded, (8, 8), 20)
+        decoded, _ = fcwta.step(sess, digits.data, forward_only=True)
+        visualize_reconstruction(digits.data, decoded, (8, 8), 20)
 
         # Evaluate classification accuracy
         X_train, X_test, y_train, y_test = train_test_split(
@@ -108,8 +110,8 @@ def main():
             digits.target,
             test_size=FLAGS.test_size,
             random_state=0 if FLAGS.use_seed else None)
-        X_train_f = fcwta.step(sess, X_train, forward_only=True)
-        X_test_f = fcwta.step(sess, X_test, forward_only=True)
+        X_train_f = fcwta.encode(sess, X_train)
+        X_test_f = fcwta.encode(sess, X_test)
         for C in np.logspace(-2, 3, 6):
             raw_acc, _ = svm_acc(X_train, y_train, X_test, y_test, C)
             featurized_acc, _ = svm_acc(X_train_f, y_train, X_test_f, y_test, C)
