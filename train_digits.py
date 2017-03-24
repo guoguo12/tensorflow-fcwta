@@ -16,7 +16,7 @@ tf.app.flags.DEFINE_integer('batch_size', 256,
                             'batch size to use during training')
 tf.app.flags.DEFINE_integer('hidden_units', 128,
                             'size of each ReLU (encode) layer')
-tf.app.flags.DEFINE_integer('num_layers', 3,
+tf.app.flags.DEFINE_integer('num_layers', 2,
                             'number of ReLU (encode) layers')
 tf.app.flags.DEFINE_integer('train_steps', 4000,
                             'total minibatches to train')
@@ -67,7 +67,7 @@ def main():
         dictionary = fcwta.get_dictionary(sess)
         plot_dictionary(dictionary, (8, 8), num_shown=40)
 
-        # Examine reconstructions
+        # Examine reconstructions of first 20 images
         decoded, _ = fcwta.step(sess, digits.data, forward_only=True)
         plot_reconstruction(digits.data, decoded, (8, 8), 20)
 

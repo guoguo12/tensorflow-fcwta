@@ -30,9 +30,9 @@ def plot_reconstruction(truth, reconstructed, shape, num_shown=10):
     plt.show()
 
 
-def svm_acc(X_train, y_train, X_test, y_test, C, kernel='linear'):
-    """Trains and evaluates an SVM with the given hyperparameters and data."""
-    clf = sklearn.svm.SVC(C=C, kernel=kernel)
+def svm_acc(X_train, y_train, X_test, y_test, C):
+    """Trains and evaluates a linear SVM with the given data and C value."""
+    clf = sklearn.svm.LinearSVC(C=C)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     return accuracy_score(y_test, y_pred), confusion_matrix(y_test, y_pred)
