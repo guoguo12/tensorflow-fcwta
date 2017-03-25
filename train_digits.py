@@ -79,10 +79,10 @@ def main():
             random_state=0 if FLAGS.use_seed else None)
         X_train_f = fcwta.encode(sess, X_train)
         X_test_f = fcwta.encode(sess, X_test)
-        for C in np.logspace(-4, 5, 10):
+        for C in np.logspace(-5, 5, 11):
             raw_acc, _ = svm_acc(X_train, y_train, X_test, y_test, C)
             featurized_acc, _ = svm_acc(X_train_f, y_train, X_test_f, y_test, C)
-            print('C={:.2f}, raw acc={:.3f}, featurized acc={:.3f}'.format(
+            print('C={:.5f}, raw acc={:.3f}, featurized acc={:.3f}'.format(
                 C, raw_acc, featurized_acc))
 
         coord.request_stop()
