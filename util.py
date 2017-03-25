@@ -7,6 +7,7 @@ import datetime
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, accuracy_score
 import sklearn.svm
+import tensorflow as tf
 
 
 def timestamp(format='%Y_%m_%d_%H_%M_%S'):
@@ -42,3 +43,7 @@ def svm_acc(X_train, y_train, X_test, y_test, C):
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     return accuracy_score(y_test, y_pred), confusion_matrix(y_test, y_pred)
+
+
+def value_to_summary(value, tag):
+    return tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])

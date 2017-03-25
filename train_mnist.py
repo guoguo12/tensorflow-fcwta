@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 from models import FullyConnectedWTA
-from util import plot_dictionary, plot_reconstruction, svm_acc, timestamp
+from util import plot_dictionary, plot_reconstruction, svm_acc, timestamp, value_to_summary
 
 default_dir_suffix = timestamp()
 
@@ -14,6 +14,8 @@ tf.app.flags.DEFINE_string('data_dir', 'MNIST_data/',
                            'where to load data from (or download data to)')
 tf.app.flags.DEFINE_string('train_dir', 'train_%s' % default_dir_suffix,
                            'where to store checkpoints to (or load checkpoints from)')
+tf.app.flags.DEFINE_string('log_dir', 'log_%s' % default_dir_suffix,
+                           'where to store logs to')
 tf.app.flags.DEFINE_float('learning_rate', 1e-2,
                           'learning rate to use during training')
 tf.app.flags.DEFINE_float('sparsity', 0.05,
@@ -54,6 +56,8 @@ def main():
                               learning_rate=FLAGS.learning_rate)
 
     with tf.Session() as sess:
+        writer = tf.summary.FileWriter(FLAGS.log_dir, sess.graph)
+
         ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
         if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
             print('Restoring from %s' % ckpt.model_checkpoint_path)
@@ -75,8 +79,11 @@ def main():
             step += 1
 
             if step % FLAGS.steps_per_display == 0:
+                global_step = fcwta.global_step.eval()
                 print('step={}, global step={}, loss={:.3f}, time={:.3f}'.format(
-                    step, fcwta.global_step.eval(), avg_loss, avg_time))
+                    step, global_step, avg_loss, avg_time))
+                writer.add_summary(value_to_summary(avg_loss, 'loss'),
+                                   global_step=global_step)
                 avg_time = avg_loss = 0
             if step % FLAGS.steps_per_checkpoint == 0:
                 checkpoint_path = FLAGS.train_dir + '/ckpt'
