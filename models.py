@@ -60,7 +60,6 @@ class FullyConnectedWTA:
 
             decoded = tf.layers.dense(sparse_encoded,
                                       self.input_dim,
-                                      use_bias=False,
                                       name='linear')
             self.decoded = decoded
 
@@ -130,8 +129,7 @@ class FullyConnectedWTA:
           The code dictionary, with shape (hidden_units, input_dim).
         """
         with tf.variable_scope(self.name, reuse=True):
-            decoded = tf.layers.dense(
-                tf.eye(self.hidden_units),
-                self.input_dim,
-                use_bias=False, name='linear')
+            decoded = tf.layers.dense(tf.eye(self.hidden_units),
+                                      self.input_dim,
+                                      name='linear')
             return session.run(decoded)

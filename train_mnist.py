@@ -1,13 +1,14 @@
 import os
+import time
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 from models import FullyConnectedWTA
-from util import plot_dictionary, plot_reconstruction, svm_acc, time
+from util import plot_dictionary, plot_reconstruction, svm_acc, timestamp
 
-default_dir_suffix = time()
+default_dir_suffix = timestamp()
 
 tf.app.flags.DEFINE_string('data_dir', 'MNIST_data/',
                            'where to load data from (or download data to)')
@@ -19,17 +20,17 @@ tf.app.flags.DEFINE_float('sparsity', 0.05,
                           'lifetime sparsity constraint to enforce')
 tf.app.flags.DEFINE_integer('batch_size', 128,
                             'batch size to use during training')
-tf.app.flags.DEFINE_integer('hidden_units', 2000,
+tf.app.flags.DEFINE_integer('hidden_units', 1024,
                             'size of each ReLU (encode) layer')
-tf.app.flags.DEFINE_integer('num_layers', 3,
+tf.app.flags.DEFINE_integer('num_layers', 2,
                             'number of ReLU (encode) layers')
-tf.app.flags.DEFINE_integer('train_steps', 300,
+tf.app.flags.DEFINE_integer('train_steps', 5000,
                             'total minibatches to train')
 tf.app.flags.DEFINE_integer('steps_per_display', 50,
                             'minibatches to train before printing loss')
-tf.app.flags.DEFINE_integer('steps_per_checkpoint', 100,
+tf.app.flags.DEFINE_integer('steps_per_checkpoint', 1000,
                             'minibatches to train before saving checkpoint')
-tf.app.flags.DEFINE_integer('train_size', 10000,
+tf.app.flags.DEFINE_integer('train_size', 15000,
                             'number of examples to use to train classifier')
 tf.app.flags.DEFINE_integer('test_size', 2000,
                             'number of examples to use to test classifier')
@@ -62,15 +63,21 @@ def main():
             if not os.path.exists(FLAGS.train_dir):
                 os.makedirs(FLAGS.train_dir)
 
+        avg_time = avg_loss = 0  # Averages over FLAGS.steps_per_display steps
         step = 0
         while step < FLAGS.train_steps:
+            start_time = time.time()
             batch_x, _ = mnist.train.next_batch(FLAGS.batch_size)
             _, loss = fcwta.step(sess, batch_x)
+
+            avg_time += (time.time() - start_time) / FLAGS.steps_per_display
+            avg_loss += loss / FLAGS.steps_per_display
             step += 1
 
             if step % FLAGS.steps_per_display == 0:
-                print('step={}, global step={}, loss={:.3f}'.format(
-                    step, fcwta.global_step.eval(), loss))
+                print('step={}, global step={}, loss={:.3f}, time={:.3f}'.format(
+                    step, fcwta.global_step.eval(), avg_loss, avg_time))
+                avg_time = avg_loss = 0
             if step % FLAGS.steps_per_checkpoint == 0:
                 checkpoint_path = FLAGS.train_dir + '/ckpt'
                 fcwta.saver.save(sess,

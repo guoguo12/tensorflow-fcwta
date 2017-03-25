@@ -9,7 +9,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 import sklearn.svm
 
 
-def time(format='%Y_%m_%d_%H_%M_%S'):
+def timestamp(format='%Y_%m_%d_%H_%M_%S'):
     return datetime.datetime.now().strftime(format)
 
 
@@ -19,7 +19,7 @@ def plot_dictionary(dictionary, shape, num_shown=20, row_length=10):
     for i, image in enumerate(dictionary[:num_shown]):
         plt.subplot(rows, 10, i + 1)
         plt.axis('off')
-        plt.imshow(image.reshape(shape), cmap=plt.cm.gray_r)
+        plt.imshow(image.reshape(shape), cmap=plt.cm.gray)
     plt.show()
 
 
@@ -32,7 +32,7 @@ def plot_reconstruction(truth, reconstructed, shape, num_shown=10):
     for i, image in enumerate(reconstructed[:num_shown]):
         plt.subplot(2, num_shown, i + num_shown + 1)
         plt.axis('off')
-        plt.imshow(image.reshape(shape), cmap=plt.cm.gray_r)
+        plt.imshow(image.reshape(shape), cmap=plt.cm.gray)
     plt.show()
 
 
