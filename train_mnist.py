@@ -32,9 +32,9 @@ tf.app.flags.DEFINE_integer('steps_per_display', 50,
                             'minibatches to train before printing loss')
 tf.app.flags.DEFINE_integer('steps_per_checkpoint', 1000,
                             'minibatches to train before saving checkpoint')
-tf.app.flags.DEFINE_integer('train_size', 15000,
+tf.app.flags.DEFINE_integer('train_size', 60000,
                             'number of examples to use to train classifier')
-tf.app.flags.DEFINE_integer('test_size', 2000,
+tf.app.flags.DEFINE_integer('test_size', 10000,
                             'number of examples to use to test classifier')
 tf.app.flags.DEFINE_boolean('use_seed', True,
                             'fix random seed to guarantee reproducibility')
