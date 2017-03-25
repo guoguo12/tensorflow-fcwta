@@ -36,6 +36,7 @@ class FullyConnectedWTA:
     def _initialize_vars(self):
         """Sets up the training graph."""
         with tf.variable_scope(self.name):
+            self.global_step = tf.Variable(0, name='global_step', trainable=False)
             self.input = tf.placeholder(tf.float32, shape=[None, self.input_dim])
 
             encoded = self.input
@@ -64,7 +65,10 @@ class FullyConnectedWTA:
             self.decoded = decoded
 
             self.loss = tf.reduce_sum(tf.square(decoded - self.input))
-            self.optimizer_op = self.optimizer(self.learning_rate).minimize(self.loss)
+            self.optimizer_op = self.optimizer(self.learning_rate).minimize(
+                self.loss, self.global_step)
+
+            self.saver = tf.train.Saver(tf.global_variables())
 
     def step(self, session, input, forward_only=False):
         """Run a step of the model, feeding the given inputs.

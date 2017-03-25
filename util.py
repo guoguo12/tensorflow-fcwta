@@ -2,9 +2,15 @@
 Shared training utilities.
 """
 
+import datetime
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, accuracy_score
 import sklearn.svm
+
+
+def time(format='%Y_%m_%d_%H_%M_%S'):
+    return datetime.datetime.now().strftime(format)
 
 
 def plot_dictionary(dictionary, shape, num_shown=20, row_length=10):
