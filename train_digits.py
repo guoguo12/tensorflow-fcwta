@@ -1,3 +1,12 @@
+"""
+Trains a FC-WTA autoencoder on the scikit-learn digits dataset. Also plots
+some visualizations and evaluates the learned featurization by training an SVM
+on the encoded data.
+
+The default settings should give 97.5% classification accuracy, which is better
+than the 95.5% accuracy achieved by an SVM trained on the raw pixel values.
+"""
+
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -8,9 +17,9 @@ from util import plot_dictionary, plot_reconstruction, svm_acc
 
 tf.app.flags.DEFINE_float('learning_rate', 1e-2,
                           'learning rate to use during training')
-tf.app.flags.DEFINE_float('sparsity', 0.05,
+tf.app.flags.DEFINE_float('sparsity', 0.07,
                           'lifetime sparsity constraint to enforce')
-tf.app.flags.DEFINE_float('test_size', 0.2,
+tf.app.flags.DEFINE_float('test_size', 0.35,
                           'classification test set size')
 tf.app.flags.DEFINE_integer('batch_size', 256,
                             'batch size to use during training')
@@ -18,9 +27,9 @@ tf.app.flags.DEFINE_integer('hidden_units', 128,
                             'size of each ReLU (encode) layer')
 tf.app.flags.DEFINE_integer('num_layers', 2,
                             'number of ReLU (encode) layers')
-tf.app.flags.DEFINE_integer('train_steps', 4000,
+tf.app.flags.DEFINE_integer('train_steps', 5000,
                             'total minibatches to train')
-tf.app.flags.DEFINE_integer('steps_per_display', 200,
+tf.app.flags.DEFINE_integer('steps_per_display', 500,
                             'minibatches to train before printing loss')
 tf.app.flags.DEFINE_boolean('use_seed', True,
                             'fix random seed to guarantee reproducibility')
@@ -32,17 +41,23 @@ QUEUE_MIN_AFTER_DEQUEUE = 128
 
 
 def main():
-    if FLAGS.use_seed:  # TODO: Fix non-determinism
+    if FLAGS.use_seed:
         np.random.seed(0)
         tf.set_random_seed(0)
 
     digits = load_digits()
+    X_train, X_test, y_train, y_test = train_test_split(
+        digits.data,
+        digits.target,
+        test_size=FLAGS.test_size,
+        random_state=0 if FLAGS.use_seed else None)
+
     batch = tf.train.shuffle_batch(
-        [digits.data],
+        [X_train],
         batch_size=FLAGS.batch_size,
         capacity=QUEUE_CAPACITY,
         min_after_dequeue=QUEUE_MIN_AFTER_DEQUEUE,
-        seed=0 if FLAGS.use_seed else None,
+        seed=1 if FLAGS.use_seed else None,
         enqueue_many=True)
 
     fcwta = FullyConnectedWTA(64,
@@ -65,18 +80,13 @@ def main():
 
         # Examine code dictionary
         dictionary = fcwta.get_dictionary(sess)
-        plot_dictionary(dictionary, (8, 8), num_shown=40)
+        plot_dictionary(dictionary, (8, 8), num_shown=128, row_length=16)
 
         # Examine reconstructions of first 20 images
         decoded, _ = fcwta.step(sess, digits.data, forward_only=True)
         plot_reconstruction(digits.data, decoded, (8, 8), 20)
 
         # Evaluate classification accuracy
-        X_train, X_test, y_train, y_test = train_test_split(
-            digits.data,
-            digits.target,
-            test_size=FLAGS.test_size,
-            random_state=0 if FLAGS.use_seed else None)
         X_train_f = fcwta.encode(sess, X_train)
         X_test_f = fcwta.encode(sess, X_test)
         for C in np.logspace(-5, 5, 11):

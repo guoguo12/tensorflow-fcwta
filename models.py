@@ -120,7 +120,7 @@ class FullyConnectedWTA:
         return session.run(self.encoded, feed_dict={self.input: input})
 
     def get_dictionary(self, session):
-        """Fetch the learned code dictionary.
+        """Fetch (approximately) the learned code dictionary.
 
         Args:
           session: TensorFlow session to use.
@@ -129,7 +129,7 @@ class FullyConnectedWTA:
           The code dictionary, with shape (hidden_units, input_dim).
         """
         with tf.variable_scope(self.name, reuse=True):
-            decoded = tf.layers.dense(tf.eye(self.hidden_units),
+            decoded = tf.layers.dense(1e15 * tf.eye(self.hidden_units),
                                       self.input_dim,
                                       name='linear')
             return session.run(decoded)

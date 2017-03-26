@@ -18,7 +18,7 @@ def plot_dictionary(dictionary, shape, num_shown=20, row_length=10):
     """Plots the code dictionary."""
     rows = num_shown / row_length
     for i, image in enumerate(dictionary[:num_shown]):
-        plt.subplot(rows, 10, i + 1)
+        plt.subplot(rows, row_length, i + 1)
         plt.axis('off')
         plt.imshow(image.reshape(shape), cmap=plt.cm.gray)
     plt.show()
