@@ -31,7 +31,7 @@ def plot_reconstruction(truth, reconstructed, shape, num_shown=10):
     for i, image in enumerate(truth[:num_shown]):
         plt.subplot(2, num_shown, i + 1)
         plt.axis('off')
-        plt.imshow(image.reshape(shape), cmap=plt.cm.gray_r)
+        plt.imshow(image.reshape(shape), cmap=plt.cm.gray)
     for i, image in enumerate(reconstructed[:num_shown]):
         plt.subplot(2, num_shown, i + num_shown + 1)
         plt.axis('off')
