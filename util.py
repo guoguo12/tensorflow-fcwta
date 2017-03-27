@@ -5,6 +5,8 @@ Shared training utilities.
 import datetime
 
 import matplotlib.pyplot as plt
+import sklearn.decomposition
+import sklearn.manifold
 from sklearn.metrics import confusion_matrix, accuracy_score
 import sklearn.svm
 import tensorflow as tf
@@ -34,6 +36,15 @@ def plot_reconstruction(truth, reconstructed, shape, num_shown=10):
         plt.subplot(2, num_shown, i + num_shown + 1)
         plt.axis('off')
         plt.imshow(image.reshape(shape), cmap=plt.cm.gray)
+    plt.show()
+
+
+def plot_tsne(X, labels):
+    """Plots a t-SNE visualization of the given data."""
+    if X.shape[1] > 50:
+        X = sklearn.decomposition.PCA(50).fit_transform(X)
+    X = sklearn.manifold.TSNE(learning_rate=200).fit_transform(X)
+    plt.scatter(X[:,0], X[:,1], c=labels, cmap=plt.cm.viridis)
     plt.show()
 
 

@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 from models import FullyConnectedWTA
-from util import plot_dictionary, plot_reconstruction, svm_acc, timestamp, value_to_summary
+from util import plot_dictionary, plot_reconstruction, plot_tsne, svm_acc, timestamp, value_to_summary
 
 default_dir_suffix = timestamp()
 
@@ -15,7 +15,7 @@ tf.app.flags.DEFINE_string('data_dir', 'MNIST_data/',
 tf.app.flags.DEFINE_string('train_dir', 'train_%s' % default_dir_suffix,
                            'where to store checkpoints to (or load checkpoints from)')
 tf.app.flags.DEFINE_string('log_dir', 'log_%s' % default_dir_suffix,
-                           'where to store logs to')
+                           'where to store logs to (use with --write_logs)')
 tf.app.flags.DEFINE_float('learning_rate', 1e-2,
                           'learning rate to use during training')
 tf.app.flags.DEFINE_float('sparsity', 0.05,
@@ -32,12 +32,14 @@ tf.app.flags.DEFINE_integer('steps_per_display', 50,
                             'minibatches to train before printing loss')
 tf.app.flags.DEFINE_integer('steps_per_checkpoint', 1000,
                             'minibatches to train before saving checkpoint')
-tf.app.flags.DEFINE_integer('train_size', 60000,
+tf.app.flags.DEFINE_integer('train_size', 15000,
                             'number of examples to use to train classifier')
 tf.app.flags.DEFINE_integer('test_size', 10000,
                             'number of examples to use to test classifier')
 tf.app.flags.DEFINE_boolean('use_seed', True,
                             'fix random seed to guarantee reproducibility')
+tf.app.flags.DEFINE_boolean('write_logs', False,
+                            'write log files')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -48,6 +50,10 @@ def main():
         tf.set_random_seed(0)
 
     mnist = input_data.read_data_sets(FLAGS.data_dir, validation_size=0)
+    X_train = mnist.train.images[:FLAGS.train_size]
+    y_train = mnist.train.labels[:FLAGS.train_size]
+    X_test = mnist.test.images[:FLAGS.test_size]
+    y_test = mnist.test.labels[:FLAGS.test_size]
 
     fcwta = FullyConnectedWTA(784,
                               sparsity=FLAGS.sparsity,
@@ -56,7 +62,8 @@ def main():
                               learning_rate=FLAGS.learning_rate)
 
     with tf.Session() as sess:
-        writer = tf.summary.FileWriter(FLAGS.log_dir, sess.graph)
+        if FLAGS.write_logs:
+            writer = tf.summary.FileWriter(FLAGS.log_dir, sess.graph)
 
         ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
         if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
@@ -82,8 +89,9 @@ def main():
                 global_step = fcwta.global_step.eval()
                 print('step={}, global step={}, loss={:.3f}, time={:.3f}'.format(
                     step, global_step, avg_loss, avg_time))
-                writer.add_summary(value_to_summary(avg_loss, 'loss'),
-                                   global_step=global_step)
+                if FLAGS.write_logs:
+                    writer.add_summary(value_to_summary(avg_loss, 'loss'),
+                                       global_step=global_step)
                 avg_time = avg_loss = 0
             if step % FLAGS.steps_per_checkpoint == 0:
                 checkpoint_path = FLAGS.train_dir + '/ckpt'
@@ -97,15 +105,20 @@ def main():
         plot_dictionary(dictionary, (28, 28), num_shown=80)
 
         # Examine reconstructions of first 20 images
-        decoded, _ = fcwta.step(sess, mnist.train.images[:20], forward_only=True)
-        plot_reconstruction(mnist.train.images[:20], decoded, (28, 28), 20)
+        decoded, _ = fcwta.step(sess, X_train[:20], forward_only=True)
+        plot_reconstruction(X_train[:20], decoded, (28, 28), 20)
+
+        # Featurize data
+        X_train_f = fcwta.encode(sess, X_train)
+        X_test_f = fcwta.encode(sess, X_test)
+
+        # Examine t-SNE visualizations
+        plot_tsne(X_train, y_train)
+        plot_tsne(X_train_f, y_train)
 
         # Evaluate classification accuracy
-        X_train_f = fcwta.encode(sess, mnist.train.images[:FLAGS.train_size])
-        X_test_f = fcwta.encode(sess, mnist.test.images[:FLAGS.test_size])
         for C in np.logspace(-2, 3, 6):
-            acc, _ = svm_acc(X_train_f, mnist.train.labels[:FLAGS.train_size],
-                             X_test_f, mnist.test.labels[:FLAGS.test_size], C)
+            acc, _ = svm_acc(X_train_f, y_train, X_test_f, y_test, C)
             print('C={:.2f}, acc={:.3f}'.format(C, acc))
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 
 from models import FullyConnectedWTA
-from util import plot_dictionary, plot_reconstruction, svm_acc
+from util import plot_dictionary, plot_reconstruction, plot_tsne, svm_acc
 
 tf.app.flags.DEFINE_float('learning_rate', 1e-2,
                           'learning rate to use during training')
@@ -86,9 +86,15 @@ def main():
         decoded, _ = fcwta.step(sess, digits.data, forward_only=True)
         plot_reconstruction(digits.data, decoded, (8, 8), 20)
 
-        # Evaluate classification accuracy
+        # Featurize data
         X_train_f = fcwta.encode(sess, X_train)
         X_test_f = fcwta.encode(sess, X_test)
+
+        # Examine t-SNE visualizations
+        plot_tsne(X_train, y_train)
+        plot_tsne(X_train_f, y_train)
+
+        # Evaluate classification accuracy
         for C in np.logspace(-5, 5, 11):
             raw_acc, _ = svm_acc(X_train, y_train, X_test, y_test, C)
             featurized_acc, _ = svm_acc(X_train_f, y_train, X_test_f, y_test, C)
