@@ -52,21 +52,43 @@ class FullyConnectedWTA:
                 initializer=tf.zeros_initializer())
             self.input = tf.placeholder(tf.float32, shape=[None, self.input_dim])
 
-            current = self.input
-            for i in range(self.encode_layers - 1):
-                current = self._relu_layer(current, self.input_dim, self.input_dim, i)
-            self.encoded = self._relu_layer(current, self.input_dim, self.hidden_units, self.encode_layers - 1)
+        current = self.input
+        for i in range(self.encode_layers - 1):
+            current = self._relu_layer(current, self.input_dim, self.input_dim, i)
+        self.encoded = self._relu_layer(current, self.input_dim, self.hidden_units, self.encode_layers - 1)
 
-            encoded_t = tf.transpose(self.encoded)
-            enc_shape = tf.shape(encoded_t)
+        encoded_t = tf.transpose(self.encoded)
+        enc_shape = tf.shape(encoded_t)
 
-            k = tf.to_int32(self.sparsity * tf.to_float(enc_shape[1]))
-            top_values, _ = tf.nn.top_k(encoded_t, k=k, sorted=False)
-            mask = tf.where(encoded_t < tf.reduce_min(top_values, axis=1, keep_dims=True),
-                            tf.zeros(enc_shape, tf.float32),
-                            tf.ones(enc_shape, tf.float32))
-            sparse_encoded = self.encoded * tf.transpose(mask)
+        k = tf.to_int32(self.sparsity * tf.to_float(enc_shape[1]))
+        top_values, _ = tf.nn.top_k(encoded_t, k=k, sorted=False)
+        mask = tf.where(encoded_t < tf.reduce_min(top_values, axis=1, keep_dims=True),
+                        tf.zeros(enc_shape, tf.float32),
+                        tf.ones(enc_shape, tf.float32))
+        sparse_encoded = self.encoded * tf.transpose(mask)
 
+        self.decoded = self._decode_layer(sparse_encoded)
+
+        self.loss = tf.reduce_sum(tf.square(self.decoded - self.input))
+        self.optimizer_op = self.optimizer(self.learning_rate).minimize(
+            self.loss, self.global_step)
+
+        self.saver = tf.train.Saver(tf.global_variables())
+
+    def _relu_layer(self, input, input_dim, output_dim, layer_num):
+        with tf.variable_scope(self.name) as scope:
+            return tf.nn.relu_layer(
+                input,
+                tf.get_variable('encode_W_{}'.format(layer_num),
+                                shape=[input_dim, output_dim],
+                                initializer=self.weight_initializer),
+                tf.get_variable('encode_b_{}'.format(layer_num),
+                                shape=[output_dim],
+                                initializer=self.bias_initializer),
+                'encode_layer_{}'.format(layer_num))
+
+    def _decode_layer(self, input, reuse=False):
+        with tf.variable_scope(self.name, reuse=reuse) as scope:
             decode_b = tf.get_variable('decode_b',
                                        shape=[self.input_dim],
                                        initializer=self.bias_initializer)
@@ -80,24 +102,7 @@ class FullyConnectedWTA:
                     'decode_W',
                     shape=[self.hidden_units, self.input_dim],
                     initializer=self.weight_initializer)
-            self.decoded = tf.matmul(sparse_encoded, decode_W) + decode_b
-
-        self.loss = tf.reduce_sum(tf.square(self.decoded - self.input))
-        self.optimizer_op = self.optimizer(self.learning_rate).minimize(
-            self.loss, self.global_step)
-
-        self.saver = tf.train.Saver(tf.global_variables())
-
-    def _relu_layer(self, input, input_dim, output_dim, layer_num):
-        return tf.nn.relu_layer(
-            input,
-            tf.get_variable('encode_W_{}'.format(layer_num),
-                            shape=[input_dim, output_dim],
-                            initializer=self.weight_initializer),
-            tf.get_variable('encode_b_{}'.format(layer_num),
-                            shape=[output_dim],
-                            initializer=self.bias_initializer),
-            'encode_layer_{}'.format(layer_num))
+            return tf.matmul(input, decode_W) + decode_b
 
     def _get_last_encode_layer_name(self):
         return 'encode_W_{}'.format(self.encode_layers - 1)
@@ -161,8 +166,5 @@ class FullyConnectedWTA:
         Returns:
           The code dictionary, with shape (hidden_units, input_dim).
         """
-        with tf.variable_scope(self.name, reuse=True):
-            decoded = tf.layers.dense(1e15 * tf.eye(self.hidden_units),
-                                      self.input_dim,
-                                      name='linear')
-            return session.run(decoded)
+        fake_input = 1e15 * tf.eye(self.hidden_units)
+        return session.run(self._decode_layer(fake_input, reuse=True))
