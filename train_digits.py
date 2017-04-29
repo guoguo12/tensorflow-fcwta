@@ -23,11 +23,11 @@ tf.app.flags.DEFINE_float('test_size', 0.35,
                           'classification test set size')
 tf.app.flags.DEFINE_integer('batch_size', 256,
                             'batch size to use during training')
-tf.app.flags.DEFINE_integer('hidden_units', 128,
+tf.app.flags.DEFINE_integer('hidden_units', 256,
                             'size of each ReLU (encode) layer')
-tf.app.flags.DEFINE_integer('num_layers', 2,
+tf.app.flags.DEFINE_integer('num_layers', 1,
                             'number of ReLU (encode) layers')
-tf.app.flags.DEFINE_integer('train_steps', 5000,
+tf.app.flags.DEFINE_integer('train_steps', 10000,
                             'total minibatches to train')
 tf.app.flags.DEFINE_integer('steps_per_display', 500,
                             'minibatches to train before printing loss')
@@ -61,6 +61,7 @@ def main():
         enqueue_many=True)
 
     fcwta = FullyConnectedWTA(64,
+                              FLAGS.batch_size,
                               sparsity=FLAGS.sparsity,
                               hidden_units=FLAGS.hidden_units,
                               encode_layers=FLAGS.num_layers,

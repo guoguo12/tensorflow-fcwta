@@ -56,6 +56,7 @@ def main():
     y_test = mnist.test.labels[:FLAGS.test_size]
 
     fcwta = FullyConnectedWTA(784,
+                              FLAGS.batch_size,
                               sparsity=FLAGS.sparsity,
                               hidden_units=FLAGS.hidden_units,
                               encode_layers=FLAGS.num_layers,

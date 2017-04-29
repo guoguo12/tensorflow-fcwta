@@ -1,3 +1,5 @@
+from itertools import cycle, islice
+
 import tensorflow as tf
 
 
@@ -6,6 +8,7 @@ class FullyConnectedWTA:
 
     def __init__(self,
                  input_dim,
+                 batch_size,
                  sparsity=0.05,
                  hidden_units=24,
                  encode_layers=3,
@@ -32,6 +35,7 @@ class FullyConnectedWTA:
           name: the name of the variable scope to use.
         """
         self.input_dim = input_dim
+        self.batch_size = batch_size
         self.sparsity = sparsity
         self.hidden_units = hidden_units
         self.encode_layers = encode_layers
@@ -60,11 +64,16 @@ class FullyConnectedWTA:
         encoded_t = tf.transpose(self.encoded)
         enc_shape = tf.shape(encoded_t)
 
-        k = tf.to_int32(self.sparsity * tf.to_float(enc_shape[1]))
-        top_values, _ = tf.nn.top_k(encoded_t, k=k, sorted=False)
-        mask = tf.where(encoded_t < tf.reduce_min(top_values, axis=1, keep_dims=True),
-                        tf.zeros(enc_shape, tf.float32),
-                        tf.ones(enc_shape, tf.float32))
+        k = int(self.sparsity * self.batch_size)
+        _, top_indices = tf.nn.top_k(encoded_t, k=k, sorted=False)
+
+        top_k_unstacked = tf.unstack(top_indices, axis=1)
+        row_indices = [tf.range(self.hidden_units) for _ in range(k)]
+        combined_columns = tf.transpose(tf.stack(roundrobin(row_indices, top_k_unstacked)))
+        indices = tf.reshape(combined_columns, [-1, 2])
+        updates = tf.ones(self.hidden_units * k)
+        shape = tf.constant([self.hidden_units, self.batch_size])
+        mask = tf.scatter_nd(indices, updates, shape)
         sparse_encoded = self.encoded * tf.transpose(mask)
 
         self.decoded = self._decode_layer(sparse_encoded)
@@ -168,3 +177,19 @@ class FullyConnectedWTA:
         """
         fake_input = 1e15 * tf.eye(self.hidden_units)
         return session.run(self._decode_layer(fake_input, reuse=True))
+
+
+def gen_roundrobin(*iterables):
+    pending = len(iterables)
+    nexts = cycle(iter(it).__next__ for it in iterables)
+    while pending:
+        try:
+            for next in nexts:
+                yield next()
+        except StopIteration:
+            pending -= 1
+            nexts = cycle(islice(nexts, pending))
+
+
+def roundrobin(*iterables):
+    return list(gen_roundrobin(iterables))
