@@ -113,19 +113,19 @@ def main():
 
         # Examine code dictionary
         dictionary = fcwta.get_dictionary(sess)
-        plot_dictionary(dictionary, (28, 28), num_shown=80)
+        plot_dictionary(dictionary, (28, 28), num_shown=200, row_length=20)
 
         # Examine reconstructions of first 20 images
-        decoded, _ = fcwta.step(sess, X_train[:20], forward_only=True)
-        plot_reconstruction(X_train[:20], decoded, (28, 28), 20)
+        decoded, _ = fcwta.step(sess, X_train[:100], forward_only=True)
+        plot_reconstruction(X_train[:100], decoded, (28, 28), 20)
 
         # Featurize data
         X_train_f = fcwta.encode(sess, X_train)
         X_test_f = fcwta.encode(sess, X_test)
 
         # Examine t-SNE visualizations
-        plot_tsne(X_train, y_train)
-        plot_tsne(X_train_f, y_train)
+        plot_tsne(X_train[:1000], y_train[:1000])
+        plot_tsne(X_train_f[:1000], y_train[:1000])
 
         # Evaluate classification accuracy
         for C in np.logspace(-3, 2, 6):

@@ -8,16 +8,18 @@ See `train_digits.py` and `train_mnist.py` for example code.
 
 ## Example images
 
-The following images are created by `train_digits.py`, which trains a FC-WTA autoencoder on the [scikit-learn handwritten digits dataset](http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html#sklearn.datasets.load_digits) with 7% sparsity and 128 hidden units.
+The following images are created by `train_mnist.py`, which trains a FC-WTA autoencoder on the [MNIST digits dataset](http://yann.lecun.com/exdb/mnist/) with 5% sparsity and 2000 hidden units.
 
 This plot compares the original images (top row) to the autoencoder's reconstructions (bottom row):
-![Digit reconstruction visualization](images/digits_reconstruction.png?raw=true)
+![Digit reconstruction visualization](images/mnist_reconstruction.png?raw=true)
 
 This one shows the autoencoder's learned code dictionary:
-![Code dictionary visualization](images/digits_dictionary.png?raw=true)
+![Code dictionary visualization](images/mnist_dictionary.png?raw=true)
 
 Finally, here are t-SNE plots of the original data (left) and the featurized data (right):
-![t-SNE visualizations of original and featurized images](images/digits_tsne_merged.png?raw=true)
+![t-SNE visualizations of original and featurized images](images/mnist_tsne_merged.png?raw=true)
+
+A linear SVM trained on the featurized data achieves a 98.62% classification accuracy, which is close to the 98.8% accuracy reported in the original paper by Makhzani and Frey.
 
 ## Credits
 
