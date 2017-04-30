@@ -13,6 +13,7 @@ import tensorflow as tf
 
 
 def timestamp(format='%Y_%m_%d_%H_%M_%S'):
+    """Returns the current time as a string."""
     return datetime.datetime.now().strftime(format)
 
 
@@ -57,4 +58,5 @@ def svm_acc(X_train, y_train, X_test, y_test, C):
 
 
 def value_to_summary(value, tag):
+    """Converts a numerical value into a tf.Summary object."""
     return tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])

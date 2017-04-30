@@ -22,6 +22,7 @@ class FullyConnectedWTA:
 
         Args:
           input_dim: the dimensionality of the input data.
+          batch_size: the batch size to be used.
           sparsity: the lifetime sparsity constraint to enforce.
           hidden_units: the number of units in each ReLU (encode) layer, and
             also the dimensionality of the encoded data.
@@ -61,16 +62,22 @@ class FullyConnectedWTA:
             current = self._relu_layer(current, self.input_dim, self.input_dim, i)
         self.encoded = self._relu_layer(current, self.input_dim, self.hidden_units, self.encode_layers - 1)
 
+        # Make batch size the last dimension (for use with tf.nn.top_k)
         encoded_t = tf.transpose(self.encoded)
-        enc_shape = tf.shape(encoded_t)
 
+        # Compute the indices corresponding to the top k activations for each
+        # neuron in the final encoder layer
         k = int(self.sparsity * self.batch_size)
         _, top_indices = tf.nn.top_k(encoded_t, k=k, sorted=False)
 
+        # Transform top_indices, which contains rows of column indices, into
+        # indices, a list of [row, column] pairs (for use with tf.scatter_nd)
         top_k_unstacked = tf.unstack(top_indices, axis=1)
         row_indices = [tf.range(self.hidden_units) for _ in range(k)]
-        combined_columns = tf.transpose(tf.stack(roundrobin(row_indices, top_k_unstacked)))
+        combined_columns = tf.transpose(tf.stack(_interleave(row_indices, top_k_unstacked)))
         indices = tf.reshape(combined_columns, [-1, 2])
+
+        # Apply sparsity constraint
         updates = tf.ones(self.hidden_units * k)
         shape = tf.constant([self.hidden_units, self.batch_size])
         mask = tf.scatter_nd(indices, updates, shape)
@@ -128,11 +135,16 @@ class FullyConnectedWTA:
           A tuple containing the reconstruction and the (summed) squared loss.
 
         Raises:
-          ValueError: if dimensionality of input disagrees with the input_dim
-          provided in the constructor.
+          ValueError: if batch size (resp. dimensionality) of input does not
+          agree with the batch_size (resp. input_dim) provided in the
+          constructor.
         """
+        if input.shape[0] != self.batch_size:
+            raise ValueError('Input batch size must equal the batch_size '
+                             'provided in the constructor, {} != {}.'.format(
+                                input.shape[0], self.batch_size))
         if input.shape[1] != self.input_dim:
-            raise ValueError('Dimensionality of input must equal the input_dim'
+            raise ValueError('Dimensionality of input must equal the input_dim '
                              'provided in the constructor, {} != {}.'.format(
                                 input.shape[1], self.input_dim))
 
@@ -179,17 +191,6 @@ class FullyConnectedWTA:
         return session.run(self._decode_layer(fake_input, reuse=True))
 
 
-def gen_roundrobin(*iterables):
-    pending = len(iterables)
-    nexts = cycle(iter(it).__next__ for it in iterables)
-    while pending:
-        try:
-            for next in nexts:
-                yield next()
-        except StopIteration:
-            pending -= 1
-            nexts = cycle(islice(nexts, pending))
-
-
-def roundrobin(*iterables):
-    return list(gen_roundrobin(iterables))
+def _interleave(xs, ys):
+    """Interleaves the two given lists (assumed to be of equal length)."""
+    return [val for pair in zip(xs, ys) for val in pair]
