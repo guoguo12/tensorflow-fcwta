@@ -3,7 +3,7 @@ Trains a FC-WTA autoencoder on the scikit-learn digits dataset. Also plots
 some visualizations and evaluates the learned featurization by training an SVM
 on the encoded data.
 
-The default settings should give 98.9% classification accuracy, which is better
+The default settings should give 99.0% classification accuracy, which is better
 than the 95.5% accuracy achieved by an SVM trained on the raw pixel values.
 """
 

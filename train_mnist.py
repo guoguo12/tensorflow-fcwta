@@ -1,3 +1,13 @@
+"""
+Trains a FC-WTA autoencoder on the MNIST digits dataset. Also plots
+some visualizations and evaluates the learned featurization by training an SVM
+on the encoded data.
+
+The default settings should give 98.62% classification accuracy, which is better
+than the 95.5% accuracy achieved by an SVM trained on the raw pixel values and
+is close to the 98.80% accuracy reported in the original WTA paper.
+"""
+
 import os
 import time
 
@@ -16,29 +26,29 @@ tf.app.flags.DEFINE_string('train_dir', 'train_%s' % default_dir_suffix,
                            'where to store checkpoints to (or load checkpoints from)')
 tf.app.flags.DEFINE_string('log_dir', 'log_%s' % default_dir_suffix,
                            'where to store logs to (use with --write_logs)')
-tf.app.flags.DEFINE_float('learning_rate', 1e-2,
+tf.app.flags.DEFINE_float('learning_rate', 1e-3,
                           'learning rate to use during training')
 tf.app.flags.DEFINE_float('sparsity', 0.05,
                           'lifetime sparsity constraint to enforce')
-tf.app.flags.DEFINE_integer('batch_size', 128,
+tf.app.flags.DEFINE_integer('batch_size', 100,
                             'batch size to use during training')
-tf.app.flags.DEFINE_integer('hidden_units', 1024,
+tf.app.flags.DEFINE_integer('hidden_units', 2000,
                             'size of each ReLU (encode) layer')
-tf.app.flags.DEFINE_integer('num_layers', 2,
+tf.app.flags.DEFINE_integer('num_layers', 1,
                             'number of ReLU (encode) layers')
-tf.app.flags.DEFINE_integer('train_steps', 5000,
+tf.app.flags.DEFINE_integer('train_steps', 30000,
                             'total minibatches to train')
-tf.app.flags.DEFINE_integer('steps_per_display', 50,
+tf.app.flags.DEFINE_integer('steps_per_display', 100,
                             'minibatches to train before printing loss')
-tf.app.flags.DEFINE_integer('steps_per_checkpoint', 1000,
+tf.app.flags.DEFINE_integer('steps_per_checkpoint', 10000,
                             'minibatches to train before saving checkpoint')
-tf.app.flags.DEFINE_integer('train_size', 15000,
+tf.app.flags.DEFINE_integer('train_size', 60000,
                             'number of examples to use to train classifier')
 tf.app.flags.DEFINE_integer('test_size', 10000,
                             'number of examples to use to test classifier')
 tf.app.flags.DEFINE_boolean('use_seed', True,
                             'fix random seed to guarantee reproducibility')
-tf.app.flags.DEFINE_boolean('write_logs', False,
+tf.app.flags.DEFINE_boolean('write_logs', True,
                             'write log files')
 
 FLAGS = tf.app.flags.FLAGS
@@ -118,9 +128,9 @@ def main():
         plot_tsne(X_train_f, y_train)
 
         # Evaluate classification accuracy
-        for C in np.logspace(-2, 3, 6):
+        for C in np.logspace(-3, 2, 6):
             acc, _ = svm_acc(X_train_f, y_train, X_test_f, y_test, C)
-            print('C={:.2f}, acc={:.3f}'.format(C, acc))
+            print('C={:.3f}, acc={:.4f}'.format(C, acc))
 
 if __name__ == '__main__':
     main()
