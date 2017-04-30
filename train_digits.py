@@ -83,9 +83,9 @@ def main():
         dictionary = fcwta.get_dictionary(sess)
         plot_dictionary(dictionary, (8, 8), num_shown=128, row_length=16)
 
-        # Examine reconstructions of first 20 images
-        decoded, _ = fcwta.step(sess, digits.data, forward_only=True)
-        plot_reconstruction(digits.data, decoded, (8, 8), 20)
+        # Examine reconstructions of first batch of images
+        decoded, _ = fcwta.step(sess, digits.data[:FLAGS.batch_size], forward_only=True)
+        plot_reconstruction(digits.data[:FLAGS.batch_size], decoded, (8, 8), 20)
 
         # Featurize data
         X_train_f = fcwta.encode(sess, X_train)
