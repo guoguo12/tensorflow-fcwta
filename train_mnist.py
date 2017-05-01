@@ -48,8 +48,10 @@ tf.app.flags.DEFINE_integer('test_size', 10000,
                             'number of examples to use to test classifier')
 tf.app.flags.DEFINE_boolean('use_seed', True,
                             'fix random seed to guarantee reproducibility')
-tf.app.flags.DEFINE_boolean('write_logs', True,
+tf.app.flags.DEFINE_boolean('write_logs', False,
                             'write log files')
+tf.app.flags.DEFINE_boolean('show_plots', False,
+                            'show visualizations')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -111,21 +113,23 @@ def main():
                                  global_step=fcwta.global_step)
                 print('Wrote checkpoint')
 
-        # Examine code dictionary
-        dictionary = fcwta.get_dictionary(sess)
-        plot_dictionary(dictionary, (28, 28), num_shown=200, row_length=20)
+        if FLAGS.show_plots:
+            # Examine code dictionary
+            dictionary = fcwta.get_dictionary(sess)
+            plot_dictionary(dictionary, (28, 28), num_shown=200, row_length=20)
 
-        # Examine reconstructions of first batch of images
-        decoded, _ = fcwta.step(sess, X_train[:FLAGS.batch_size], forward_only=True)
-        plot_reconstruction(X_train[:FLAGS.batch_size], decoded, (28, 28), 20)
+            # Examine reconstructions of first batch of images
+            decoded, _ = fcwta.step(sess, X_train[:FLAGS.batch_size], forward_only=True)
+            plot_reconstruction(X_train[:FLAGS.batch_size], decoded, (28, 28), 20)
 
         # Featurize data
         X_train_f = fcwta.encode(sess, X_train)
         X_test_f = fcwta.encode(sess, X_test)
 
-        # Examine t-SNE visualizations
-        plot_tsne(X_train[:1000], y_train[:1000])
-        plot_tsne(X_train_f[:1000], y_train[:1000])
+        if FLAGS.show_plots:
+            # Examine t-SNE visualizations
+            plot_tsne(X_train[:1000], y_train[:1000])
+            plot_tsne(X_train_f[:1000], y_train[:1000])
 
         # Evaluate classification accuracy
         for C in np.logspace(-3, 2, 6):
