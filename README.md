@@ -19,4 +19,4 @@ This one shows the autoencoder's learned code dictionary:
 Finally, here are t-SNE plots of the original data (left) and the featurized data (right):
 ![t-SNE visualizations of original and featurized images](images/mnist_tsne_merged.png?raw=true)
 
-A linear SVM trained on the featurized data achieves a 98.62% classification accuracy, which is close to the 98.8% accuracy reported in the original paper by Makhzani and Frey.
+A linear SVM trained on the featurized data achieves a ~98.6% classification accuracy, which is close to the 98.8% accuracy reported in the original paper by Makhzani and Frey.

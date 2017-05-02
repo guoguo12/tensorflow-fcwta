@@ -51,7 +51,7 @@ def plot_tsne(X, labels):
 
 def svm_acc(X_train, y_train, X_test, y_test, C):
     """Trains and evaluates a linear SVM with the given data and C value."""
-    clf = sklearn.svm.LinearSVC(C=C)
+    clf = sklearn.svm.LinearSVC(C=C, random_state=1)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     return accuracy_score(y_test, y_pred), confusion_matrix(y_test, y_pred)

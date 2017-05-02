@@ -1,10 +1,13 @@
 """
 Trains a FC-WTA autoencoder on the scikit-learn digits dataset. Also plots
-some visualizations and evaluates the learned featurization by training an SVM
-on the encoded data.
+some visualizations (see --show_plots) and evaluates the learned
+featurization by training an SVM on the encoded data.
 
-The default settings should give 99.0% classification accuracy, which is better
-than the 95.5% accuracy achieved by an SVM trained on the raw pixel values.
+The default settings should give roughly 99% classification accuracy, up from
+the 95.5% accuracy achieved by an SVM trained on the raw pixel values.
+
+Because sklearn.svm.LinearSVC is non-deterministic, the results may vary
+from run to run.
 """
 
 import numpy as np
@@ -27,12 +30,14 @@ tf.app.flags.DEFINE_integer('hidden_units', 256,
                             'size of each ReLU (encode) layer')
 tf.app.flags.DEFINE_integer('num_layers', 1,
                             'number of ReLU (encode) layers')
-tf.app.flags.DEFINE_integer('train_steps', 10000,
+tf.app.flags.DEFINE_integer('train_steps', 8000,
                             'total minibatches to train')
 tf.app.flags.DEFINE_integer('steps_per_display', 500,
                             'minibatches to train before printing loss')
 tf.app.flags.DEFINE_boolean('use_seed', True,
                             'fix random seed to guarantee reproducibility')
+tf.app.flags.DEFINE_boolean('show_plots', False,
+                            'show visualizations')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -41,16 +46,12 @@ QUEUE_MIN_AFTER_DEQUEUE = 128
 
 
 def main():
-    if FLAGS.use_seed:
-        np.random.seed(0)
-        tf.set_random_seed(0)
-
     digits = load_digits()
     X_train, X_test, y_train, y_test = train_test_split(
         digits.data,
         digits.target,
         test_size=FLAGS.test_size,
-        random_state=0 if FLAGS.use_seed else None)
+        random_state=1 if FLAGS.use_seed else None)
 
     batch = tf.train.shuffle_batch(
         [X_train],
@@ -79,21 +80,23 @@ def main():
             if step % FLAGS.steps_per_display == 0:
                 print('step={}, loss={:.3f}'.format(step, loss))
 
-        # Examine code dictionary
-        dictionary = fcwta.get_dictionary(sess)
-        plot_dictionary(dictionary, (8, 8), num_shown=128, row_length=16)
+        if FLAGS.show_plots:
+            # Examine code dictionary
+            dictionary = fcwta.get_dictionary(sess)
+            plot_dictionary(dictionary, (8, 8), num_shown=128, row_length=16)
 
-        # Examine reconstructions of first batch of images
-        decoded, _ = fcwta.step(sess, digits.data[:FLAGS.batch_size], forward_only=True)
-        plot_reconstruction(digits.data[:FLAGS.batch_size], decoded, (8, 8), 20)
+            # Examine reconstructions of first batch of images
+            decoded, _ = fcwta.step(sess, digits.data[:FLAGS.batch_size], forward_only=True)
+            plot_reconstruction(digits.data[:FLAGS.batch_size], decoded, (8, 8), 20)
 
         # Featurize data
         X_train_f = fcwta.encode(sess, X_train)
         X_test_f = fcwta.encode(sess, X_test)
 
-        # Examine t-SNE visualizations
-        plot_tsne(X_train, y_train)
-        plot_tsne(X_train_f, y_train)
+        if FLAGS.show_plots:
+            # Examine t-SNE visualizations
+            plot_tsne(X_train, y_train)
+            plot_tsne(X_train_f, y_train)
 
         # Evaluate classification accuracy
         for C in np.logspace(-5, 5, 11):

@@ -4,7 +4,10 @@ import tensorflow as tf
 
 
 class FullyConnectedWTA:
-    """Fully-connected winner-take-all autoencoder."""
+    """Fully-connected winner-take-all autoencoder.
+
+    This model is deterministic.
+    """
 
     def __init__(self,
                  input_dim,
@@ -15,7 +18,7 @@ class FullyConnectedWTA:
                  optimizer=tf.train.AdamOptimizer,
                  learning_rate=1e-2,
                  tie_weights=True,
-                 weight_initializer=tf.random_normal_initializer(0, 0.01),
+                 weight_initializer=tf.random_normal_initializer(0, 0.01, seed=1),
                  bias_initializer=tf.constant_initializer(0.01),
                  name='FCWTA'):
         """Create the model.

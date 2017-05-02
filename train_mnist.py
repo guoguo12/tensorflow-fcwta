@@ -1,11 +1,13 @@
 """
 Trains a FC-WTA autoencoder on the MNIST digits dataset. Also plots
-some visualizations and evaluates the learned featurization by training an SVM
-on the encoded data.
+some visualizations (see --show_plots) and evaluates the learned
+featurization by training an SVM on the encoded data.
 
-The default settings should give 98.62% classification accuracy, which is better
-than the 95.5% accuracy achieved by an SVM trained on the raw pixel values and
-is close to the 98.80% accuracy reported in the original WTA paper.
+The default settings should give roughly 98.6% classification accuracy,
+close to the 98.80% accuracy reported in the original WTA paper.
+
+Because sklearn.svm.LinearSVC is non-deterministic, the results may vary
+from run to run.
 """
 
 import os
@@ -57,10 +59,6 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main():
-    if FLAGS.use_seed:
-        np.random.seed(0)
-        tf.set_random_seed(0)
-
     mnist = input_data.read_data_sets(FLAGS.data_dir, validation_size=0)
     X_train = mnist.train.images[:FLAGS.train_size]
     y_train = mnist.train.labels[:FLAGS.train_size]
